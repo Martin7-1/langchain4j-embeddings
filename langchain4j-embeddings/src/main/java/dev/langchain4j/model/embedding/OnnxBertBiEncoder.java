@@ -31,10 +31,21 @@ public class OnnxBertBiEncoder {
     private final HuggingFaceTokenizer tokenizer;
     private final PoolingMode poolingMode;
 
-    public OnnxBertBiEncoder(InputStream model, InputStream tokenizer, PoolingMode poolingMode) {
+    public OnnxBertBiEncoder(InputStream model, InputStream tokenizer, PoolingMode poolingMode,
+                             boolean useCuda, int... cudaIds) {
         try {
             this.environment = OrtEnvironment.getEnvironment();
-            this.session = environment.createSession(loadModel(model));
+            OrtSession.SessionOptions sessionOptions = new OrtSession.SessionOptions();
+            if (useCuda) {
+                if (cudaIds.length == 0) {
+                    sessionOptions.addCUDA();
+                } else {
+                    for (int cudaId : cudaIds) {
+                        sessionOptions.addCUDA(cudaId);
+                    }
+                }
+            }
+            this.session = environment.createSession(loadModel(model), sessionOptions);
             this.expectedInputs = session.getInputNames();
             this.tokenizer = HuggingFaceTokenizer.newInstance(tokenizer, singletonMap("padding", "false"));
             this.poolingMode = ensureNotNull(poolingMode, "poolingMode");

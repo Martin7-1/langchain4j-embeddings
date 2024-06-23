@@ -3,11 +3,15 @@ package dev.langchain4j.model.embedding;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.store.embedding.CosineSimilarity;
 import dev.langchain4j.store.embedding.RelevanceScore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIf;
+import org.junit.jupiter.api.condition.EnabledIf;
 
 import static dev.langchain4j.internal.Utils.repeat;
 import static dev.langchain4j.model.embedding.internal.VectorUtils.magnitudeOf;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.data.Percentage.withPercentage;
 
 class BgeSmallEnEmbeddingModelIT {
@@ -88,5 +92,30 @@ class BgeSmallEnEmbeddingModelIT {
         EmbeddingModel model = new BgeSmallEnEmbeddingModel();
 
         assertThat(model.dimension()).isEqualTo(384);
+    }
+
+    @Test
+    @DisabledIf(value = "dev.langchain4j.model.embedding.internal.GpuUtils#hasGpu", disabledReason = "This test should only be executed when device do not contain GPU")
+    void should_throw_exception_when_no_gpu() {
+
+        assertThatExceptionOfType(RuntimeException.class)
+                .isThrownBy(() -> new BgeSmallEnEmbeddingModel(true))
+                .withMessageContaining("Failed to find CUDA shared provider");
+    }
+
+    @Test
+    @EnabledIf(value = "dev.langchain4j.model.embedding.internal.GpuUtils#hasGpu", disabledReason = "This test should only by executed when device contains GPU")
+    void should_use_gpu() {
+
+        EmbeddingModel model = new BgeSmallEnEmbeddingModel(true);
+
+        Embedding first = model.embed("hi").content();
+        assertThat(first.vector()).hasSize(384);
+
+        Embedding second = model.embed("hello").content();
+        assertThat(second.vector()).hasSize(384);
+
+        double cosineSimilarity = CosineSimilarity.between(first, second);
+        assertThat(RelevanceScore.fromCosineSimilarity(cosineSimilarity)).isGreaterThan(0.9);
     }
 }

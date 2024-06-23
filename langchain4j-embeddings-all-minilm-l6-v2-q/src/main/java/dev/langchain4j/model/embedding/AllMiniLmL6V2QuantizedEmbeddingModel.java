@@ -15,15 +15,25 @@ package dev.langchain4j.model.embedding;
  */
 public class AllMiniLmL6V2QuantizedEmbeddingModel extends AbstractInProcessEmbeddingModel {
 
-    private static final OnnxBertBiEncoder MODEL = loadFromJar(
-            "all-minilm-l6-v2-q.onnx",
-            "tokenizer.json",
-            PoolingMode.MEAN
-    );
+    private final OnnxBertBiEncoder model;
+
+    public AllMiniLmL6V2QuantizedEmbeddingModel(boolean useCuda, int... cudaIds) {
+        model = loadFromJar(
+                "all-minilm-l6-v2-q.onnx",
+                "tokenizer.json",
+                PoolingMode.MEAN,
+                useCuda,
+                cudaIds
+        );
+    }
+
+    public AllMiniLmL6V2QuantizedEmbeddingModel() {
+        this(false);
+    }
 
     @Override
     protected OnnxBertBiEncoder model() {
-        return MODEL;
+        return model;
     }
 
     @Override

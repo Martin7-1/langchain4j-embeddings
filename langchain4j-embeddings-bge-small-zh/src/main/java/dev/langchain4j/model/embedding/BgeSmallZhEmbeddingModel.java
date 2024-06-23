@@ -15,15 +15,25 @@ package dev.langchain4j.model.embedding;
  */
 public class BgeSmallZhEmbeddingModel extends AbstractInProcessEmbeddingModel {
 
-    private static final OnnxBertBiEncoder MODEL = loadFromJar(
-            "bge-small-zh.onnx",
-            "tokenizer.json",
-            PoolingMode.CLS
-    );
+    private final OnnxBertBiEncoder model;
+
+    public BgeSmallZhEmbeddingModel(boolean useCuda, int... cudaIds) {
+        model = loadFromJar(
+                "bge-small-zh.onnx",
+                "tokenizer.json",
+                PoolingMode.CLS,
+                useCuda,
+                cudaIds
+        );
+    }
+
+    public BgeSmallZhEmbeddingModel() {
+        this(false);
+    }
 
     @Override
     protected OnnxBertBiEncoder model() {
-        return MODEL;
+        return model;
     }
 
     @Override
